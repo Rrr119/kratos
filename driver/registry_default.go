@@ -52,6 +52,7 @@ import (
 	"github.com/ory/kratos/selfservice/strategy/totp"
 	"github.com/ory/kratos/selfservice/strategy/webauthn"
 	"github.com/ory/kratos/session"
+	"github.com/ory/kratos/tenant"
 	"github.com/ory/kratos/x"
 	"github.com/ory/kratos/x/nosurfx"
 	"github.com/ory/kratos/x/transaction"
@@ -105,10 +106,14 @@ type RegistryDefault struct {
 	hookShowVerificationUI *hook.ShowVerificationUIHook
 	hookVerifyNewAddress   *hook.VerifyNewAddress
 
-	identityHandler        *identity.Handler
-	identityValidator      *identity.Validator
-	identityManager        *identity.Manager
-	identitySchemaProvider schema.IdentitySchemaProvider
+	identityHandler         *identity.Handler
+	identityValidator       *identity.Validator
+	identityManager         *identity.Manager
+	identitySchemaProvider  schema.IdentitySchemaProvider
+	tenantConfigProvider    *tenant.ConfigProvider
+	tenantSchemaResolver    *tenant.SchemaResolver
+	tenantIdentityValidator *tenant.IdentityValidator
+	tenantSessionCompat     *tenant.SessionCompatibility
 
 	courierHandler *courier.Handler
 
@@ -474,6 +479,50 @@ func (m *RegistryDefault) ActiveCredentialsCounterStrategies(_ context.Context) 
 
 func (m *RegistryDefault) IdentityValidator() *identity.Validator {
 	return m.identityValidator
+}
+
+// TenantConfigs implements tenant.Provider, exposing the configured
+// multi-tenant policy.
+func (m *RegistryDefault) TenantConfigs(ctx context.Context) (tenant.Configs, error) {
+	return m.tenantConfig().TenantConfigs(ctx)
+}
+
+// TenantSchemaResolver returns the inheritance-aware identity schema
+// resolver.
+func (m *RegistryDefault) TenantSchemaResolver() *tenant.SchemaResolver {
+	m.initTenant()
+	return m.tenantSchemaResolver
+}
+
+// TenantIdentityValidator returns the tenant-scoped identity validator.
+func (m *RegistryDefault) TenantIdentityValidator() *tenant.IdentityValidator {
+	m.initTenant()
+	return m.tenantIdentityValidator
+}
+
+// TenantSessionCompatibility returns the session compatibility helper.
+func (m *RegistryDefault) TenantSessionCompatibility() *tenant.SessionCompatibility {
+	m.initTenant()
+	return m.tenantSessionCompat
+}
+
+// initTenant lazily builds the tenant components. It cannot run in
+// initCheapMembers because the config is injected only after the
+// registry struct is constructed.
+func (m *RegistryDefault) initTenant() {
+	if m.tenantIdentityValidator != nil {
+		return
+	}
+	m.tenantConfigProvider = tenant.NewConfigProvider(m.Config())
+	m.tenantSchemaResolver = tenant.NewSchemaResolver(
+		tenant.NewConfigSchemaSource(m.identitySchemaProvider))
+	m.tenantIdentityValidator = tenant.NewIdentityValidator(m, m.tenantSchemaResolver)
+	m.tenantSessionCompat = tenant.NewSessionCompatibility()
+}
+
+func (m *RegistryDefault) tenantConfig() *tenant.ConfigProvider {
+	m.initTenant()
+	return m.tenantConfigProvider
 }
 
 func (m *RegistryDefault) SetConfig(c *config.Config) {

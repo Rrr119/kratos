@@ -30,6 +30,7 @@ import (
 	"github.com/ory/kratos/selfservice/flow"
 	"github.com/ory/kratos/selfservice/flow/settings"
 	"github.com/ory/kratos/session"
+	"github.com/ory/kratos/tenant"
 	"github.com/ory/kratos/ui/container"
 	"github.com/ory/kratos/ui/node"
 	"github.com/ory/kratos/x"
@@ -37,6 +38,13 @@ import (
 )
 
 var _ settings.Strategy = new(Strategy)
+
+// tenantIdentityValidator is implemented by registries with multi-tenant
+// support. Registries without it skip tenant-scoped validation and keep
+// the single-tenant behavior.
+type tenantIdentityValidator interface {
+	TenantIdentityValidator() *tenant.IdentityValidator
+}
 
 type (
 	strategyDependencies interface {

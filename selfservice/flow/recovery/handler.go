@@ -15,6 +15,7 @@ import (
 	"github.com/ory/kratos/selfservice/errorx"
 	"github.com/ory/kratos/selfservice/flow"
 	"github.com/ory/kratos/session"
+	"github.com/ory/kratos/tenant"
 	"github.com/ory/kratos/ui/node"
 	"github.com/ory/kratos/x"
 	"github.com/ory/kratos/x/nosurfx"
@@ -134,6 +135,10 @@ func (h *Handler) createNativeRecoveryFlow(w http.ResponseWriter, r *http.Reques
 		h.d.Writer().WriteError(w, r, err)
 		return
 	}
+	if err := tenant.BindTenantFromRequest(h.d, r, f); err != nil {
+		h.d.Writer().WriteError(w, r, err)
+		return
+	}
 
 	if err := h.d.RecoveryExecutor().PreRecoveryHook(w, r, f); err != nil {
 		h.d.Writer().WriteError(w, r, err)
@@ -207,6 +212,10 @@ func (h *Handler) createBrowserRecoveryFlow(w http.ResponseWriter, r *http.Reque
 
 	f, err := NewFlow(h.d, h.d.Config().SelfServiceFlowRecoveryRequestLifespan(r.Context()), h.d.GenerateCSRFToken(r), r, activeRecoveryStrategies, flow.TypeBrowser)
 	if err != nil {
+		h.d.SelfServiceErrorManager().Forward(r.Context(), w, r, err)
+		return
+	}
+	if err := tenant.BindTenantFromRequest(h.d, r, f); err != nil {
 		h.d.SelfServiceErrorManager().Forward(r.Context(), w, r, err)
 		return
 	}

@@ -35,6 +35,7 @@ import (
 	"github.com/ory/kratos/selfservice/flow"
 	"github.com/ory/kratos/selfservice/flow/recovery"
 	"github.com/ory/kratos/session"
+	"github.com/ory/kratos/tenant"
 	"github.com/ory/kratos/text"
 	"github.com/ory/kratos/ui/container"
 	"github.com/ory/kratos/ui/node"
@@ -653,10 +654,15 @@ func (s *Strategy) recoveryV2HandleStateConfirmingAddress(r *http.Request, f *re
 
 	f.TransientPayload = body.TransientPayload
 
+	channelType := tenant.InferChannel(body.RecoveryConfirmAddress)
+	if err := tenant.EnsureRecoveryChannel(r.Context(), s.deps, f, channelType); err != nil {
+		return err
+	}
+
 	// NOTE: We do not fetch the db address here. We only (try to) send the code to the user provided address.
 	// That way we avoid information exfiltration.
 	// `SendRecoveryCode` will anyway check by itself if the provided address is a known address or not.
-	if err := s.deps.CodeSender().SendRecoveryCode(r.Context(), f, hackyInferChannel(body.RecoveryConfirmAddress), body.RecoveryConfirmAddress, r.Header); err != nil {
+	if err := s.deps.CodeSender().SendRecoveryCode(r.Context(), f, channelType, body.RecoveryConfirmAddress, r.Header); err != nil {
 		if !errors.Is(err, ErrUnknownAddress()) {
 			return err
 		}

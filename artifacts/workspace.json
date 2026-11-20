@@ -1,0 +1,17 @@
+{
+  "root": "/home/dev/feedback/uid28752",
+  "B": "/home/dev/feedback/uid28752",
+  "sha": "d3fe29c7799f88319b34dbbd33ef9f0fa72556a7",
+  "wslDistro": "Ubuntu-26.04",
+  "source": {
+    "owner": "ory",
+    "repo": "kratos",
+    "sha": "d3fe29c7799f88319b34dbbd33ef9f0fa72556a7"
+  },
+  "fork": {
+    "owner": "Rrr119",
+    "repo": "kratos",
+    "cloneUrl": "https://github.com/Rrr119/kratos.git"
+  },
+  "at": "2026-11-20T03:34:50.663Z"
+}

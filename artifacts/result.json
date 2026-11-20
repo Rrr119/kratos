@@ -1,0 +1,18 @@
+{
+  "uid": "28752",
+  "harness": "Codex CLI",
+  "snapshotUrl": "https://github.com/Rrr119/kratos/commit/d3fe29c7799f88319b34dbbd33ef9f0fa72556a7",
+  "harnessVersion": "codex-cli 0.167.2",
+  "operatingSystem": "Ubuntu 26.04.1 LTS",
+  "operatingSystemCell": [
+    "MacOS/Linux"
+  ],
+  "outputDirectory": "/home/dev/feedback/uid28752",
+  "wslDistro": "Ubuntu-26.04",
+  "B": {
+    "success": false,
+    "canceled": true,
+    "error": "任务已取消",
+    "side": "B"
+  }
+}

@@ -161,6 +161,7 @@ const (
 	ViperKeySelfServiceVerificationNotifyUnknownRecipients   = "selfservice.flows.verification.notify_unknown_recipients"
 	ViperKeyDefaultIdentitySchemaID                          = "identity.default_schema_id"
 	ViperKeyIdentitySchemas                                  = "identity.schemas"
+	ViperKeyTenants                                          = "tenants"
 	ViperKeyHasherAlgorithm                                  = "hashers.algorithm"
 	ViperKeyHasherArgon2ConfigMemory                         = "hashers.argon2.memory"
 	ViperKeyHasherArgon2ConfigIterations                     = "hashers.argon2.iterations"
@@ -263,6 +264,18 @@ type (
 		URL                   string `json:"url" koanf:"url"`
 		SelfserviceSelectable bool   `json:"selfservice_selectable" koanf:"selfservice_selectable"`
 	}
+	TenantRecoveryChannel struct {
+		ID      string `json:"id" koanf:"id"`
+		Type    string `json:"type" koanf:"type"`
+		Enabled bool   `json:"enabled" koanf:"enabled"`
+	}
+	Tenant struct {
+		ID               string                  `json:"id" koanf:"id"`
+		Name             string                  `json:"name" koanf:"name"`
+		SchemaID         string                  `json:"schema_id" koanf:"schema_id"`
+		RecoveryChannels []TenantRecoveryChannel `json:"recovery_channels" koanf:"recovery_channels"`
+	}
+	Tenants        []Tenant
 	PasswordPolicy struct {
 		HaveIBeenPwnedHost               string `json:"haveibeenpwned_host"`
 		HaveIBeenPwnedEnabled            bool   `json:"haveibeenpwned_enabled"`
@@ -651,6 +664,17 @@ func (p *Config) IdentityTraitsSchemas(ctx context.Context) (ss Schemas, err err
 	}
 
 	return ss, nil
+}
+
+// TenantsConfig returns the raw multi-tenant configuration. An absent or
+// empty `tenants` key yields an empty slice, which the tenant layer
+// treats as single-tenant mode.
+func (p *Config) TenantsConfig(ctx context.Context) (Tenants, error) {
+	var configured Tenants
+	if err := p.GetProvider(ctx).Unmarshal(ViperKeyTenants, &configured); err != nil {
+		return nil, err
+	}
+	return configured, nil
 }
 
 func (p *Config) DSN(ctx context.Context) string {

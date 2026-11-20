@@ -2768,6 +2768,60 @@
       "required": ["schemas"],
       "additionalProperties": false
     },
+    "tenants": {
+      "title": "Multi-tenant configuration",
+      "description": "Per-tenant identity schema selection and recovery channel policy. When empty, Kratos runs in single-tenant mode and all existing behavior is preserved.",
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "schema_id"],
+        "properties": {
+          "id": {
+            "title": "Tenant ID",
+            "description": "Stable tenant identifier carried by the X-Kratos-Tenant header or the tenant query parameter.",
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "title": "Tenant name",
+            "type": "string"
+          },
+          "schema_id": {
+            "title": "Identity schema ID",
+            "description": "References an entry in identity.schemas. The schema document may declare an 'extends' key to inherit from another identity schema.",
+            "type": "string",
+            "minLength": 1
+          },
+          "recovery_channels": {
+            "title": "Allowed recovery channels",
+            "description": "Recovery delivery channels enabled for this tenant. An empty list allows every globally configured channel.",
+            "type": "array",
+            "default": [],
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "type"],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["email", "sms"]
+                },
+                "enabled": {
+                  "type": "boolean",
+                  "default": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "secrets": {
       "type": "object",
       "properties": {

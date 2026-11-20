@@ -275,6 +275,11 @@ func (s *Strategy) showCredentialsSelection(ctx context.Context, w http.Response
 	}
 
 	i.Traits = identity.Traits(params.Traits)
+	if tv, ok := s.d.(tenantIdentityValidator); ok {
+		if err := tv.TenantIdentityValidator().ValidateRequestTraits(r, params.Traits); err != nil {
+			return s.handleRegistrationError(r, regFlow, params, err)
+		}
+	}
 	if err := s.d.IdentityValidator().Validate(ctx, i); err != nil {
 		return s.handleRegistrationError(r, regFlow, params, err)
 	}
